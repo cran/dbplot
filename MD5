@@ -1,11 +1,12 @@
-fa70c66ff3c82273268ee2023443a9dc *DESCRIPTION
+86493026f5c5dc3db470c365c8cb115f *DESCRIPTION
 0682b498354c00294a25e3fbe1580756 *NAMESPACE
+cf537868a26aa79b9e9abd3f55cb4085 *NEWS.md
 70a3d9ca3354a8f83616032241d61ae7 *R/boxplot.R
 5607e1407177b6218e5e70d1d3689d21 *R/discrete.R
 dd46a619cbc35b13db8a54e85fb7e070 *R/histogram.R
 34d057729db1574d34622d7bd51d0282 *R/raster.R
-ede88dd14ce4203ef6d861a8af2252b3 *R/utils.R
-63e5f58860f6b8e81079d02e497c6193 *README.md
+6dc335b547ad5567af8e439dfc97309d *R/utils.R
+9ef2556c71fa117f98af759e206571da *README.md
 f681e2134cc94973305dd4b85df594c6 *man/db_bin.Rd
 8628b1a5fb97cf074c35561f81d75c5c *man/db_compute_bins.Rd
 1b6e28e19b9ccfb3d1c329499db2d824 *man/db_compute_boxplot.Rd
@@ -17,7 +18,7 @@ f822cb61ca8f16723f5f3ef1a22d5146 *man/db_compute_count.Rd
 027ed1ae31730c3436cba033454b645c *man/dbplot_line.Rd
 1166b69d5adcea4f83c69f53b48e485d *man/dbplot_raster.Rd
 99b9d33b00b1525f89aa13b407bde4d7 *tests/testthat.R
-09ec85945afbd22c532fa29a357c460b *tests/testthat/test-dbbin.R
+52e736ae895e6d7e041eda802bb6c047 *tests/testthat/test-dbbin.R
 85962c0e3f7ddcc50a41437e8dd2e096 *tools/readme/unnamed-chunk-10-1.png
 7c5120356de1cc61351c71ff0bc17dd0 *tools/readme/unnamed-chunk-11-1.png
 6eaba2fb430624c1d40d41ff79d8e2a4 *tools/readme/unnamed-chunk-12-1.png
