@@ -12,6 +12,8 @@
 #' @param y The aggregation formula. Defaults to count (n)
 #'
 #' @examples
+#' 
+#' library(dplyr)
 #'
 #' # Returns the row count per am
 #' mtcars %>%
@@ -22,24 +24,15 @@
 #'   db_compute_count(am, mean(mpg))
 #'
 #' @export
-#' @import dplyr
-#' @importFrom rlang enexpr
 db_compute_count <- function(data, x, y = n()) {
   x <- enexpr(x)
   y <- enexpr(y)
 
-  data <- data %>%
+  data %>%
     group_by(!! x) %>%
     summarise(!! y) %>%
     collect() %>%
-    ungroup()
-
-  # Woraround for int64 support
-  colnames(data) <- c(x, "fieldname")
-  data$fieldname <- as.numeric(data$fieldname)
-  colnames(data) <- c(x, y)
-
-  data
+    ungroup() 
 }
 
 
@@ -60,6 +53,7 @@ db_compute_count <- function(data, x, y = n()) {
 #' @examples
 #'
 #' library(ggplot2)
+#' library(dplyr)
 #'
 #' # Returns a plot of the row count per am
 #' mtcars %>%
@@ -86,15 +80,12 @@ dbplot_bar <- function(data, x, y = n()) {
     x = !! x,
     y = !! y
   )
-
+  
   colnames(df) <- c("x", "y")
 
-  ggplot2::ggplot(df) +
-    ggplot2::geom_col(aes(x, y)) +
-    ggplot2::labs(
-      x = x,
-      y = y
-    )
+  ggplot(df) +
+    geom_col(aes(x, y)) +
+    labs(x = x, y = y)
 }
 
 
@@ -115,6 +106,7 @@ dbplot_bar <- function(data, x, y = n()) {
 #' @examples
 #'
 #' library(ggplot2)
+#' library(dplyr)
 #'
 #' # Returns a plot of the row count per cyl
 #' mtcars %>%
@@ -144,7 +136,7 @@ dbplot_line <- function(data, x, y = n()) {
 
   colnames(df) <- c("x", "y")
 
-  ggplot2::ggplot(df) +
-    ggplot2::geom_line(aes(x, y), stat = "identity") +
-    ggplot2::labs(x = x, y = y)
+  ggplot(df) +
+    geom_line(aes(x, y), stat = "identity") +
+    labs(x = x, y = y)
 }

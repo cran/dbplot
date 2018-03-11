@@ -15,6 +15,8 @@
 #'
 #' @examples
 #'
+#' library(dplyr)
+#'
 #' # Returns record count for 30 bins in mpg
 #' mtcars %>%
 #'   db_compute_bins(mpg)
@@ -27,26 +29,22 @@
 #' \code{\link{db_bin}},
 #'
 #' @export
-#' @import dplyr
-#' @importFrom rlang enexpr
 db_compute_bins <- function(data, x, bins = 30, binwidth = NULL) {
   x <- enexpr(x)
+
   xf <- db_bin(
-    !! x,
+    var = !! x,
     bins = bins,
     binwidth = binwidth
   )
 
-  df <- data %>%
-    group_by(x = !! xf) %>%
+  data %>%
+    select(!! x) %>%
+    group_by(!! x := !! xf) %>%
     tally() %>%
     collect() %>%
     ungroup() %>%
-    mutate(n = as.numeric(n)) # Accounts for interger64
-
-  colnames(df) <- c(x, "count")
-
-  df
+    rename(count = n)
 }
 
 #' Histogram
@@ -67,6 +65,7 @@ db_compute_bins <- function(data, x, bins = 30, binwidth = NULL) {
 #' @examples
 #'
 #' library(ggplot2)
+#' library(dplyr)
 #'
 #' # A ggplot histogram with 30 bins
 #' mtcars %>%
@@ -81,8 +80,6 @@ db_compute_bins <- function(data, x, bins = 30, binwidth = NULL) {
 #'  \code{\link{dbplot_raster}}
 #'
 #' @export
-#' @import dplyr
-#' @importFrom rlang enexpr
 dbplot_histogram <- function(data, x, bins = 30, binwidth = NULL) {
   x <- enexpr(x)
 
@@ -91,18 +88,16 @@ dbplot_histogram <- function(data, x, bins = 30, binwidth = NULL) {
     x = !! x,
     bins = bins,
     binwidth = binwidth
-  )
+  ) %>%
+    mutate(
+      x = !! x
+    )
 
-  colnames(df) <- c("x", "n")
-
-  ggplot2::ggplot(df) +
-    ggplot2::geom_col(aes(x, n)) +
+  ggplot(df) +
+    geom_col(aes(x, count)) +
     labs(
-      x = x,
+      x = expr_text(x),
       y = "count"
-    ) +
-    ggplot2::labs(
-      x = x
     )
 }
 
