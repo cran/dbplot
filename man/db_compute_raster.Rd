@@ -2,9 +2,13 @@
 % Please edit documentation in R/raster.R
 \name{db_compute_raster}
 \alias{db_compute_raster}
+\alias{db_compute_raster2}
 \title{Aggregates intersections of two variables}
 \usage{
 db_compute_raster(data, x, y, fill = n(), resolution = 100,
+  complete = FALSE)
+
+db_compute_raster2(data, x, y, fill = n(), resolution = 100,
   complete = FALSE)
 }
 \arguments{
@@ -16,7 +20,7 @@ db_compute_raster(data, x, y, fill = n(), resolution = 100,
 
 \item{fill}{The aggregation formula. Defaults to count (n)}
 
-\item{resolution}{The number of bins created by variable. The highest the number, the more records 
+\item{resolution}{The number of bins created by variable. The highest the number, the more records
 can be potentially imported from the source}
 
 \item{complete}{Uses tidyr::complete to include empty bins. Inserts value of 0.}
@@ -38,7 +42,7 @@ to the size of the results downloaded from the database:
 
 - The number of bins requested: The higher the bins value is, the more data is downloaded from the database.
 
-- How concentrated the data is: This refers to how many intersections return a value. The more 
+- How concentrated the data is: This refers to how many intersections return a value. The more
 intersections without a value, the less data is downloaded from the database.
 }
 \examples{

@@ -38,9 +38,8 @@ mtcars \%>\%
 # Returns the average and sum of mpg per am
 mtcars \%>\%
   dbplot_bar(am, avg_mpg = mean(mpg), sum_mpg = sum(mpg))
-
 }
 \seealso{
 \code{\link{dbplot_line}} ,
-\code{\link{dbplot_histogram}},  \code{\link{dbplot_raster}} ,
+\code{\link{dbplot_histogram}},  \code{\link{dbplot_raster}}
 }

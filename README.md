@@ -1,10 +1,11 @@
-dbplot
-================
 
-[![Build Status](https://travis-ci.org/edgararuiz/dbplot.svg?branch=master)](https://travis-ci.org/edgararuiz/dbplot)
+# dbplot <img src="man/figures/logo.png" align="right" alt="" width="120" />
+
+[![Build
+Status](https://travis-ci.org/edgararuiz/dbplot.svg?branch=master)](https://travis-ci.org/edgararuiz/dbplot)
 [![CRAN\_Status\_Badge](http://www.r-pkg.org/badges/version/dbplot)](http://cran.r-project.org/package=dbplot)
-![CRAN downloads](https://cranlogs.r-pkg.org/badges/grand-total/dbplot)
-[![Coverage status](https://codecov.io/gh/edgararuiz/dbplot/branch/master/graph/badge.svg)](https://codecov.io/github/edgararuiz/dbplot?branch=master)
+[![Coverage
+status](https://codecov.io/gh/edgararuiz/dbplot/branch/master/graph/badge.svg)](https://codecov.io/github/edgararuiz/dbplot?branch=master)
 
   - [Installation](#installation)
   - [Connecting to a data source](#connecting-to-a-data-source)
@@ -53,7 +54,7 @@ A Spark DataFrame will be used for the examples in this README.
 
 ``` r
 library(sparklyr)
-sc <- spark_connect(master = "local", version = "2.1.0")
+sc <- spark_connect(master = "local")
 spark_flights <- copy_to(sc, nycflights13::flights, "flights")
 ```
 
@@ -67,7 +68,7 @@ By default `dbplot_histogram()` creates a 30 bin histogram
 library(ggplot2)
 
 spark_flights %>% 
-  dbplot_histogram(sched_dep_time)
+  dbplot_histogram(distance)
 ```
 
 <img src="tools/readme/unnamed-chunk-4-1.png" style="display: block; margin: auto;" />
@@ -76,7 +77,7 @@ Use `binwidth` to fix the bin size
 
 ``` r
 spark_flights %>% 
-  dbplot_histogram(sched_dep_time, binwidth = 200)
+  dbplot_histogram(distance, binwidth = 400)
 ```
 
 <img src="tools/readme/unnamed-chunk-5-1.png" style="display: block; margin: auto;" />
@@ -85,8 +86,8 @@ Because it outputs a `ggplot2` object, more customization can be done
 
 ``` r
 spark_flights %>% 
-  dbplot_histogram(sched_dep_time, binwidth = 300) +
-  labs(title = "Flights - Scheduled Departure Time") +
+  dbplot_histogram(distance, binwidth = 400) +
+  labs(title = "Flights - Distance traveled") +
   theme_bw()
 ```
 
@@ -112,8 +113,7 @@ inside each square or processes some aggregation, like an average.
 
 ``` r
 spark_flights %>%
-  filter(!is.na(arr_delay)) %>%
-  dbplot_raster(arr_delay, dep_delay) 
+  dbplot_raster(sched_dep_time, sched_arr_time) 
 ```
 
 <img src="tools/readme/unnamed-chunk-7-1.png" style="display: block; margin: auto;" />
@@ -124,8 +124,11 @@ spark_flights %>%
 
 ``` r
 spark_flights %>%
-  filter(!is.na(arr_delay)) %>%
-  dbplot_raster(arr_delay, dep_delay, mean(distance, na.rm = TRUE)) 
+  dbplot_raster(
+    sched_dep_time, 
+    sched_arr_time, 
+    mean(distance, na.rm = TRUE)
+    ) 
 ```
 
 <img src="tools/readme/unnamed-chunk-8-1.png" style="display: block; margin: auto;" />
@@ -137,8 +140,12 @@ spark_flights %>%
 
 ``` r
 spark_flights %>%
-  filter(!is.na(arr_delay)) %>%
-  dbplot_raster(arr_delay, dep_delay, mean(distance, na.rm = TRUE), resolution = 500)
+  dbplot_raster(
+    sched_dep_time, 
+    sched_arr_time, 
+    mean(distance, na.rm = TRUE),
+    resolution = 20
+    ) 
 ```
 
 <img src="tools/readme/unnamed-chunk-9-1.png" style="display: block; margin: auto;" />
@@ -168,7 +175,8 @@ spark_flights %>%
 ```
 
     ## Warning: Missing values are always removed in SQL.
-    ## Use `AVG(x, na.rm = TRUE)` to silence this warning
+    ## Use `mean(x, na.rm = TRUE)` to silence this warning
+    ## This warning is displayed only once per session.
 
 <img src="tools/readme/unnamed-chunk-11-1.png" style="display: block; margin: auto;" />
 
@@ -195,9 +203,6 @@ spark_flights %>%
 spark_flights %>%
   dbplot_line(month, mean(dep_delay))
 ```
-
-    ## Warning: Missing values are always removed in SQL.
-    ## Use `AVG(x, na.rm = TRUE)` to silence this warning
 
 <img src="tools/readme/unnamed-chunk-13-1.png" style="display: block; margin: auto;" />
 
@@ -228,7 +233,9 @@ can also be accessed:
     discrete value
 3.  `db_compute_raster()` - Returns a data frame with the results per
     x/y intersection
-4.  `db_compute_boxplot()` - Returns a data frame with boxplot
+4.  `db_compute_raster2()` - Returns same as `db_compute_raster()`
+    function plus the coordinates of the x/y boxes
+5.  `db_compute_boxplot()` - Returns a data frame with boxplot
     calculations
 
 <!-- end list -->
@@ -239,18 +246,18 @@ spark_flights %>%
 ```
 
     ## # A tibble: 28 x 2
-    ##    arr_delay   count
-    ##        <dbl>   <dbl>
-    ##  1      4.53  79784.
-    ##  2    -40.7  207999.
-    ##  3     95.1    7890.
-    ##  4     49.8   19063.
-    ##  5    819.        8.
-    ##  6    140.     3746.
-    ##  7    321.      232.
-    ##  8    231.      921.
-    ##  9    -86.0    5325.
-    ## 10    186.     1742.
+    ##    arr_delay  count
+    ##        <dbl>  <dbl>
+    ##  1      4.53  79784
+    ##  2    -40.7  207999
+    ##  3     95.1    7890
+    ##  4     49.8   19063
+    ##  5    819.        8
+    ##  6    140.     3746
+    ##  7    321.      232
+    ##  8    231.      921
+    ##  9    -86      5325
+    ## 10    186.     1742
     ## # ... with 18 more rows
 
 The data can be piped to a plot
@@ -276,12 +283,12 @@ passed inside a dplyr
 db_bin(var)
 ```
 
-    ## (((max(var, na.rm = TRUE) - min(var, na.rm = TRUE))/30) * ifelse(as.integer(floor((var - 
-    ##     min(var, na.rm = TRUE))/((max(var, na.rm = TRUE) - min(var, 
-    ##     na.rm = TRUE))/30))) == 30, as.integer(floor((var - min(var, 
-    ##     na.rm = TRUE))/((max(var, na.rm = TRUE) - min(var, na.rm = TRUE))/30))) - 
-    ##     1, as.integer(floor((var - min(var, na.rm = TRUE))/((max(var, 
-    ##     na.rm = TRUE) - min(var, na.rm = TRUE))/30))))) + min(var, 
+    ## (((max(~var, na.rm = TRUE) - min(~var, na.rm = TRUE))/30) * ifelse(as.integer(floor(((~var) - 
+    ##     min(~var, na.rm = TRUE))/((max(~var, na.rm = TRUE) - min(~var, 
+    ##     na.rm = TRUE))/30))) == 30, as.integer(floor(((~var) - min(~var, 
+    ##     na.rm = TRUE))/((max(~var, na.rm = TRUE) - min(~var, na.rm = TRUE))/30))) - 
+    ##     1, as.integer(floor(((~var) - min(~var, na.rm = TRUE))/((max(~var, 
+    ##     na.rm = TRUE) - min(~var, na.rm = TRUE))/30))))) + min(~var, 
     ##     na.rm = TRUE)
 
 ``` r
@@ -290,20 +297,19 @@ spark_flights %>%
   tally()
 ```
 
-    ## # Source:   lazy query [?? x 2]
-    ## # Database: spark_connection
-    ##          x       n
-    ##      <dbl>   <dbl>
-    ##  1    4.53  79784.
-    ##  2  -40.7  207999.
-    ##  3   95.1    7890.
-    ##  4   49.8   19063.
-    ##  5  819.        8.
-    ##  6  140.     3746.
-    ##  7  321.      232.
-    ##  8  231.      921.
-    ##  9  -86.0    5325.
-    ## 10  186.     1742.
+    ## # Source: spark<?> [?? x 2]
+    ##          x      n
+    ##      <dbl>  <dbl>
+    ##  1    4.53  79784
+    ##  2  -40.7  207999
+    ##  3   95.1    7890
+    ##  4   49.8   19063
+    ##  5  819.        8
+    ##  6  140.     3746
+    ##  7  321.      232
+    ##  8  231.      921
+    ##  9  -86      5325
+    ## 10  186.     1742
     ## # ... with more rows
 
 ``` r
@@ -317,3 +323,9 @@ spark_flights %>%
 ```
 
 <img src="tools/readme/unnamed-chunk-19-1.png" style="display: block; margin: auto;" />
+
+``` r
+spark_disconnect(sc)
+```
+
+    ## NULL
