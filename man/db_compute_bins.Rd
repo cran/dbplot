@@ -24,8 +24,6 @@ in R are: tbl_sql, tbl_dbi, tbl_spark
 }
 \examples{
 
-library(dplyr)
-
 # Returns record count for 30 bins in mpg
 mtcars \%>\%
   db_compute_bins(mpg)
@@ -33,7 +31,6 @@ mtcars \%>\%
 # Returns record count for bins of size 10
 mtcars \%>\%
   db_compute_bins(mpg, binwidth = 10)
-
 }
 \seealso{
 \code{\link{db_bin}},

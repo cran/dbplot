@@ -8,54 +8,93 @@
 #' a database or sparklyr connection. The `class()` of such tables
 #' in R are: tbl_sql, tbl_dbi, tbl_spark
 #'
-#' It currently only works with Spark and Hive connections.
+#' It currently only works with Spark, Hive, and SQL Server connections.
 #'
-#' @param data A table (tbl)
+#' Note that this function supports input tbl that already contains
+#' grouping variables. This can be useful when creating faceted boxplots.
+#'
+#' @param data A table (tbl), can already contain additional grouping vars specified
 #' @param x A discrete variable in which to group the boxplots
 #' @param var A continuous variable
 #' @param coef Length of the whiskers as multiple of IQR. Defaults to 1.5
 #'
+#' @examples
+#'
+#' mtcars %>%
+#'   db_compute_boxplot(am, mpg)
 #' @export
 db_compute_boxplot <- function(data, x, var, coef = 1.5) {
   x <- enquo(x)
+  check_vars <- quo_get_expr(x)
+  if (length(check_vars) > 1 && expr_text(check_vars[1]) == "vars()") {
+    x <- eval_tidy(x)
+  } else {
+    x <- quos(!!x)
+  }
   var <- enquo(var)
   var <- quo_squash(var)
-
-  res <- group_by(data, !!x)
-
-  if("tbl_spark" %in% class(res)) {
-    res <- summarise(
-      res,
-      lower  = percentile_approx(!!var, 0.25),
-      middle = percentile_approx(!!var, 0.5),
-      upper  = percentile_approx(!!var, 0.75),
-      max_raw = max(!!var, na.rm = TRUE),
-      min_raw = min(!!var, na.rm = TRUE)
-    )
-  } else {
-    res <- summarise(
-      res,
-      lower  = quantile(!!var, 0.25),
-      middle = quantile(!!var, 0.5),
-      upper  = quantile(!!var, 0.75),
-      max_raw = max(!!var, na.rm = TRUE),
-      min_raw = min(!!var, na.rm = TRUE)
-    )
-  }
-
-  res <- mutate(res, iqr = (upper - lower) * coef)
-  res <- mutate(
-    res,
+  res <- group_by(data, !!!x, add = TRUE)
+  res <- calc_boxplot(res, var)
+  res <- mutate(res,
+    iqr = (upper - lower) * coef,
     min_iqr = lower - iqr,
-    max_iqr = upper + iqr
-  )
-  res <- mutate(
-    res,
+    max_iqr = upper + iqr,
     ymax = ifelse(max_raw > max_iqr, max_iqr, max_raw),
     ymin = ifelse(min_raw < min_iqr, min_iqr, min_raw)
   )
   res <- collect(res)
   ungroup(res)
+}
+
+calc_boxplot <- function(res, var) {
+  UseMethod("calc_boxplot")
+}
+
+calc_boxplot.tbl <- function(res, var) {
+  summarise(
+    res,
+    n = n(),
+    lower = quantile(!!var, 0.25),
+    middle = quantile(!!var, 0.5),
+    upper = quantile(!!var, 0.75),
+    max_raw = max(!!var, na.rm = TRUE),
+    min_raw = min(!!var, na.rm = TRUE)
+  )
+}
+
+calc_boxplot.tbl_spark <- function(res, var) {
+  calc_boxplot_sparklyr(res, var)
+}
+
+calc_boxplot_sparklyr <- function(res, var) {
+  summarise(
+    res,
+    n = n(),
+    lower = percentile_approx(!!var, 0.25),
+    middle = percentile_approx(!!var, 0.5),
+    upper = percentile_approx(!!var, 0.75),
+    max_raw = max(!!var, na.rm = TRUE),
+    min_raw = min(!!var, na.rm = TRUE)
+  )
+}
+
+`calc_boxplot.tbl_Microsoft SQL Server` <- function(res, var) {
+  calc_boxplot_mssql(res, var)
+}
+
+calc_boxplot_mssql <- function(res, var) {
+  res <- mutate(
+    res,
+    n = n(),
+    lower = quantile(!!var, 0.25),
+    middle = quantile(!!var, 0.5),
+    upper = quantile(!!var, 0.75),
+    max_raw = max(!!var, na.rm = TRUE),
+    min_raw = min(!!var, na.rm = TRUE)
+  )
+  # This should preserve grouping columns
+  res <- select(res, n, lower, middle, upper, max_raw, min_raw)
+  distinct(res)
 }
 
 #' Boxplot
@@ -80,6 +119,10 @@ db_compute_boxplot <- function(data, x, var, coef = 1.5) {
 #'  \code{\link{dbplot_raster}}, \code{\link{dbplot_histogram}}
 #'
 #' @export
+#'
+#' mtcars %>%
+#'   dbplot_boxplot(am, mpg)
+#'
 dbplot_boxplot <- function(data, x, var, coef = 1.5) {
   x <- enquo(x)
   var <- enquo(var)
@@ -92,7 +135,7 @@ dbplot_boxplot <- function(data, x, var, coef = 1.5) {
   )
 
   colnames(df) <- c(
-    "x", "lower", "middle", "upper", "max_raw", "min_raw",
+    "x", "n", "lower", "middle", "upper", "max_raw", "min_raw",
     "iqr", "min_iqr", "max_iqr", "ymax", "ymin"
   )
 
@@ -104,7 +147,8 @@ dbplot_boxplot <- function(data, x, var, coef = 1.5) {
         lower = lower,
         middle = middle,
         upper = upper,
-        ymax = ymax
+        ymax = ymax,
+        group = x
       ),
       stat = "identity"
     ) +

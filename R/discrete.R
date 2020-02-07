@@ -14,8 +14,6 @@
 #'
 #' @examples
 #'
-#' library(dplyr)
-#'
 #' # Returns the row count per am
 #' mtcars %>%
 #'   db_compute_count(am)
@@ -85,9 +83,9 @@ dbplot_bar <- function(data, x, ..., y = n()) {
 
   df <- db_compute_count(
     data = data,
-    x = !! x,
-    !!! vars,
-    y = !! y
+    x = !!x,
+    !!!vars,
+    y = !!y
   )
 
   if (ncol(df) == 2) {
@@ -170,9 +168,9 @@ dbplot_line <- function(data, x, ..., y = n()) {
 
   df <- db_compute_count(
     data = data,
-    x = !! x,
-    !!! vars,
-    y = !! y
+    x = !!x,
+    !!!vars,
+    y = !!y
   )
 
   if (ncol(df) == 2) {

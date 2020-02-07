@@ -1,3 +1,17 @@
+# dbplot 0.3.3
+
+- Exports the pipe operator
+
+- Adds missing examples
+
+- Example in README now uses SQLite (#17)
+
+- Adds support for `vars()` in the `x` argument in `db_compute_boxplot()` (#27)
+
+- Expands support for `db_compute_boxplot` to `dbplyr` backends (#23 @mkirzon)
+
+- `db_compute_boxplot` can now return boxplots for `tbl` objects with existing grouping (eg useful for facetted boxplots) (#23 @mkirzon)
+
 # dbplot 0.3.2
 
 - Addresses issue of `'symbol' is not subsettable` (#24)
