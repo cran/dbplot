@@ -15,10 +15,14 @@ dbplot_raster(data, x, y, fill = n(), resolution = 100, complete = FALSE)
 
 \item{fill}{The aggregation formula. Defaults to count (n)}
 
-\item{resolution}{The number of bins created by variable. The highest the number, the more records
-can be potentially imported from the sourd}
+\item{resolution}{The number of bins created per variable. The higher the number, the more records
+will be imported from the source}
 
 \item{complete}{Uses tidyr::complete to include empty bins. Inserts value of 0.}
+}
+\value{
+A ggplot object displaying a raster/heatmap plot of the aggregated data
+  across the two continuous variables.
 }
 \description{
 To visualize two continuous variables, we typically resort to a Scatter plot. However,
@@ -26,8 +30,8 @@ this may not be practical when visualizing millions or billions of dots represen
 intersections of the two variables. A Raster plot may be a better option,
 because it concentrates the intersections into squares that are easier to parse visually.
 
-Uses very generic dplyr code to aggregate data and ggplot2 to create
-a raster plot.  Because of this approach,
+Uses dplyr operations to aggregate data and ggplot2 to create
+a raster plot. Because of this approach,
 the calculations automatically run inside the database if `data` has
 a database or sparklyr connection. The `class()` of such tables
 in R are: tbl_sql, tbl_dbi, tbl_spark
@@ -43,17 +47,23 @@ without a value,
 the less data is downloaded from the database.
 }
 \examples{
-
-library(ggplot2)
+\dontrun{
+library(DBI)
 library(dplyr)
+library(ggplot2)
+con <- dbConnect(duckdb::duckdb(), ":memory:")
+db_faithful <- copy_to(con, faithful, "faithful")
 
 # Returns a 100x100 raster plot of record count of intersections of eruptions and waiting
-faithful \%>\%
+db_faithful |>
   dbplot_raster(eruptions, waiting)
 
 # Returns a 50x50 raster plot of eruption averages of intersections of eruptions and waiting
-faithful \%>\%
+db_faithful |>
   dbplot_raster(eruptions, waiting, fill = mean(eruptions), resolution = 50)
+
+dbDisconnect(con)
+}
 }
 \seealso{
 \code{\link{dbplot_bar}}, \code{\link{dbplot_line}} ,

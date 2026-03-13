@@ -11,7 +11,12 @@ db_bin(var, bins = 30, binwidth = NULL)
 
 \item{bins}{Number of bins. Defaults to 30.}
 
-\item{binwidth}{Single value that sets the side of the bins, it overrides bins}
+\item{binwidth}{Fixed width for each bin, in the same units as the data. Overrides bins when specified}
+}
+\value{
+An unevaluated expression (rlang quosure) that calculates bin membership
+  for the specified variable. This expression is designed to be used within dplyr
+  verbs using the `!!` operator.
 }
 \description{
 Uses the rlang package to build the formula needed to create the bins of a numeric variable
@@ -19,19 +24,25 @@ in an unevaluated fashion.  This way, the formula can be then passed inside a dp
 verb.
 }
 \examples{
-
+\dontrun{
+library(DBI)
 library(dplyr)
+con <- dbConnect(duckdb::duckdb(), ":memory:")
+db_mtcars <- copy_to(con, mtcars, "mtcars")
 
 # Important: Always name the field and
-# prefix the function with `!!`` (See Details)
+# prefix the function with `!!` (See Details)
 
 # Uses the default 30 bins
-mtcars \%>\%
-  group_by(x = !!db_bin(mpg)) \%>\%
-  tally()
+db_mtcars |>
+  group_by(x = !!db_bin(mpg)) |>
+  count()
 
 # Uses binwidth which overrides bins
-mtcars \%>\%
-  group_by(x = !!db_bin(mpg, binwidth = 10)) \%>\%
-  tally()
+db_mtcars |>
+  group_by(x = !!db_bin(mpg, binwidth = 10)) |>
+  count()
+
+dbDisconnect(con)
+}
 }

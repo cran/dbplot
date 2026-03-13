@@ -15,14 +15,33 @@ dbplot_boxplot(data, x, var, coef = 1.5)
 
 \item{coef}{Length of the whiskers as multiple of IQR. Defaults to 1.5}
 }
+\value{
+A ggplot object displaying boxplots for the specified variable grouped by x.
+}
 \description{
-Uses very generic dplyr code to aggregate data and then `ggplot2`
-to create the boxplot  Because of this approach,
+Uses dplyr operations to aggregate data and then `ggplot2`
+to create the boxplot. Because of this approach,
 the calculations automatically run inside the database if `data` has
 a database or sparklyr connection. The `class()` of such tables
 in R are: tbl_sql, tbl_dbi, tbl_spark
 
-It currently only works with Spark and Hive connections.
+Requires database support for percentile/quantile functions.
+See \code{\link{db_compute_boxplot}} for supported database backends.
+}
+\examples{
+\dontrun{
+library(DBI)
+library(dplyr)
+library(ggplot2)
+con <- dbConnect(duckdb::duckdb(), ":memory:")
+db_mtcars <- copy_to(con, mtcars, "mtcars")
+
+db_mtcars |>
+  dbplot_boxplot(am, mpg)
+
+dbDisconnect(con)
+}
+
 }
 \seealso{
 \code{\link{dbplot_bar}}, \code{\link{dbplot_line}} ,

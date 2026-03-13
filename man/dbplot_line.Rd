@@ -2,7 +2,7 @@
 % Please edit documentation in R/discrete.R
 \name{dbplot_line}
 \alias{dbplot_line}
-\title{Bar plot}
+\title{Line plot}
 \usage{
 dbplot_line(data, x, ..., y = n())
 }
@@ -11,12 +11,16 @@ dbplot_line(data, x, ..., y = n())
 
 \item{x}{A discrete variable}
 
-\item{...}{A set of named or unamed aggregations}
+\item{...}{A set of named or unnamed aggregations}
 
 \item{y}{The aggregation formula. Defaults to count (n)}
 }
+\value{
+A ggplot object with a line plot. If multiple aggregations are provided,
+  returns a list of ggplot objects, one for each aggregation.
+}
 \description{
-Uses very generic dplyr code to aggregate data and then `ggplot2`
+Uses dplyr operations to aggregate data and then `ggplot2`
 to create a line plot.  Because of this approach,
 the calculations automatically run inside the database if `data` has
 a database or sparklyr connection. The `class()` of such tables
@@ -28,21 +32,27 @@ efficiency, and only make one "trip" to the database in order to
 obtains multiple, related, plots.
 }
 \examples{
-
-library(ggplot2)
+\dontrun{
+library(DBI)
 library(dplyr)
+library(ggplot2)
+con <- dbConnect(duckdb::duckdb(), ":memory:")
+db_mtcars <- copy_to(con, mtcars, "mtcars")
 
 # Returns a plot of the row count per cyl
-mtcars \%>\%
+db_mtcars |>
   dbplot_line(cyl)
 
 # Returns a plot of the average mpg per cyl
-mtcars \%>\%
+db_mtcars |>
   dbplot_line(cyl, mean(mpg))
 
 # Returns the average and sum of mpg per am
-mtcars \%>\%
+db_mtcars |>
   dbplot_line(am, avg_mpg = mean(mpg), sum_mpg = sum(mpg))
+
+dbDisconnect(con)
+}
 }
 \seealso{
 \code{\link{dbplot_bar}},

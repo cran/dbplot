@@ -13,27 +13,36 @@ dbplot_histogram(data, x, bins = 30, binwidth = NULL)
 
 \item{bins}{Number of bins. Defaults to 30.}
 
-\item{binwidth}{Single value that sets the side of the bins, it overrides bins}
+\item{binwidth}{Fixed width for each bin, in the same units as the data. Overrides bins when specified}
+}
+\value{
+A ggplot object displaying a histogram of the specified variable.
 }
 \description{
-Uses very generic dplyr code to aggregate data and then `ggplot2`
-to create the histogram.  Because of this approach,
+Uses dplyr operations to aggregate data and then `ggplot2`
+to create the histogram. Because of this approach,
 the calculations automatically run inside the database if `data` has
 a database or sparklyr connection. The `class()` of such tables
 in R are: tbl_sql, tbl_dbi, tbl_spark
 }
 \examples{
-
-library(ggplot2)
+\dontrun{
+library(DBI)
 library(dplyr)
+library(ggplot2)
+con <- dbConnect(duckdb::duckdb(), ":memory:")
+db_mtcars <- copy_to(con, mtcars, "mtcars")
 
 # A ggplot histogram with 30 bins
-mtcars \%>\%
+db_mtcars |>
   dbplot_histogram(mpg)
 
 # A ggplot histogram with bins of size 10
-mtcars \%>\%
+db_mtcars |>
   dbplot_histogram(mpg, binwidth = 10)
+
+dbDisconnect(con)
+}
 }
 \seealso{
 \code{\link{dbplot_bar}}, \code{\link{dbplot_line}} ,

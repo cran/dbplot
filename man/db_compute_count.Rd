@@ -11,27 +11,40 @@ db_compute_count(data, x, ..., y = n())
 
 \item{x}{A discrete variable}
 
-\item{...}{A set of named or unamed aggregations}
+\item{...}{A set of named or unnamed aggregations}
 
 \item{y}{The aggregation formula. Defaults to count (n)}
 }
+\value{
+An ungrouped data.frame with the discrete variable and one or more
+  aggregation columns. The first column is the grouping variable (x), followed
+  by the aggregated values.
+}
 \description{
-Uses very generic dplyr code to aggregate data.  Because of this approach,
+Uses dplyr operations to aggregate data. Because of this approach,
 the calculations automatically run inside the database if `data` has
 a database or sparklyr connection. The `class()` of such tables
-in R are: tbl_sql, tbl_dbi, tbl_sql
+in R are: tbl_sql, tbl_dbi, tbl_spark
 }
 \examples{
+\dontrun{
+library(DBI)
+library(dplyr)
+con <- dbConnect(duckdb::duckdb(), ":memory:")
+db_mtcars <- copy_to(con, mtcars, "mtcars")
 
 # Returns the row count per am
-mtcars \%>\%
+db_mtcars |>
   db_compute_count(am)
 
 # Returns the average mpg per am
-mtcars \%>\%
+db_mtcars |>
   db_compute_count(am, mean(mpg))
 
 # Returns the average and sum of mpg per am
-mtcars \%>\%
+db_mtcars |>
   db_compute_count(am, mean(mpg), sum(mpg))
+
+dbDisconnect(con)
+}
 }

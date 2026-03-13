@@ -18,10 +18,18 @@ db_compute_raster2(data, x, y, fill = n(), resolution = 100, complete = FALSE)
 
 \item{fill}{The aggregation formula. Defaults to count (n)}
 
-\item{resolution}{The number of bins created by variable. The highest the number, the more records
-can be potentially imported from the source}
+\item{resolution}{The number of bins created per variable. The higher the number, the more records
+will be imported from the source}
 
 \item{complete}{Uses tidyr::complete to include empty bins. Inserts value of 0.}
+}
+\value{
+An ungrouped data.frame with three columns: the x variable bins, the y variable
+  bins, and the aggregated fill values for each x-y intersection.
+
+For `db_compute_raster2`: A data.frame with five columns - the x and y variable
+  bins, the fill values, and additional columns for the upper bounds of each bin
+  (x_2 and y_2), useful for defining precise tile boundaries.
 }
 \description{
 To visualize two continuous variables, we typically resort to a Scatter plot. However,
@@ -29,10 +37,10 @@ this may not be practical when visualizing millions or billions of dots represen
 intersections of the two variables. A Raster plot may be a better option,
 because it concentrates the intersections into squares that are easier to parse visually.
 
-Uses very generic dplyr code to aggregate data.  Because of this approach,
+Uses dplyr operations to aggregate data. Because of this approach,
 the calculations automatically run inside the database if `data` has
 a database or sparklyr connection. The `class()` of such tables
-in R are: tbl_sql, tbl_dbi, tbl_sql
+in R are: tbl_sql, tbl_dbi, tbl_spark
 }
 \details{
 There are two considerations when using a Raster plot with a database. Both considerations are related
@@ -44,13 +52,20 @@ to the size of the results downloaded from the database:
 intersections without a value, the less data is downloaded from the database.
 }
 \examples{
-
+\dontrun{
+library(DBI)
+library(dplyr)
+con <- dbConnect(duckdb::duckdb(), ":memory:")
+db_faithful <- copy_to(con, faithful, "faithful")
 
 # Returns a 100x100 grid of record count of intersections of eruptions and waiting
-faithful \%>\%
+db_faithful |>
   db_compute_raster(eruptions, waiting)
 
 # Returns a 50x50 grid of eruption averages of intersections of eruptions and waiting
-faithful \%>\%
+db_faithful |>
   db_compute_raster(eruptions, waiting, fill = mean(eruptions), resolution = 50)
+
+dbDisconnect(con)
+}
 }

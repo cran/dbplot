@@ -7,10 +7,10 @@
 #' intersections of the two variables. A Raster plot may be a better option,
 #' because it concentrates the intersections into squares that are easier to parse visually.
 #'
-#' Uses very generic dplyr code to aggregate data.  Because of this approach,
+#' Uses dplyr operations to aggregate data. Because of this approach,
 #' the calculations automatically run inside the database if `data` has
 #' a database or sparklyr connection. The `class()` of such tables
-#' in R are: tbl_sql, tbl_dbi, tbl_sql
+#' in R are: tbl_sql, tbl_dbi, tbl_spark
 #'
 #' @details
 #'
@@ -26,22 +26,43 @@
 #' @param x A continuous variable
 #' @param y A continuous variable
 #' @param fill The aggregation formula. Defaults to count (n)
-#' @param resolution The number of bins created by variable. The highest the number, the more records
-#' can be potentially imported from the source
+#' @param resolution The number of bins created per variable. The higher the number, the more records
+#' will be imported from the source
 #' @param complete Uses tidyr::complete to include empty bins. Inserts value of 0.
 #'
-#' @examples
+#' @returns An ungrouped data.frame with three columns: the x variable bins, the y variable
+#'   bins, and the aggregated fill values for each x-y intersection.
 #'
+#' @examples
+#' \dontrun{
+#' library(DBI)
+#' library(dplyr)
+#' con <- dbConnect(duckdb::duckdb(), ":memory:")
+#' db_faithful <- copy_to(con, faithful, "faithful")
 #'
 #' # Returns a 100x100 grid of record count of intersections of eruptions and waiting
-#' faithful %>%
+#' db_faithful |>
 #'   db_compute_raster(eruptions, waiting)
 #'
 #' # Returns a 50x50 grid of eruption averages of intersections of eruptions and waiting
-#' faithful %>%
+#' db_faithful |>
 #'   db_compute_raster(eruptions, waiting, fill = mean(eruptions), resolution = 50)
+#'
+#' dbDisconnect(con)
+#' }
 #' @export
-db_compute_raster <- function(data, x, y, fill = n(), resolution = 100, complete = FALSE) {
+db_compute_raster <- function(
+  data,
+  x,
+  y,
+  fill = n(),
+  resolution = 100,
+  complete = FALSE
+) {
+  if (resolution <= 0) {
+    stop("`resolution` must be greater than 0", call. = FALSE)
+  }
+
   x <- enquo(x)
   y <- enquo(y)
   fillname <- enquo(fill)
@@ -83,14 +104,28 @@ db_compute_raster <- function(data, x, y, fill = n(), resolution = 100, complete
 }
 
 #' @rdname db_compute_raster
+#' @returns For `db_compute_raster2`: A data.frame with five columns - the x and y variable
+#'   bins, the fill values, and additional columns for the upper bounds of each bin
+#'   (x_2 and y_2), useful for defining precise tile boundaries.
 #' @export
-db_compute_raster2 <- function(data, x, y, fill = n(), resolution = 100, complete = FALSE) {
+db_compute_raster2 <- function(
+  data,
+  x,
+  y,
+  fill = n(),
+  resolution = 100,
+  complete = FALSE
+) {
   x <- enquo(x)
   y <- enquo(y)
   fill <- enquo(fill)
   cr <- db_compute_raster(
-    data, !!x, !!y,
-    !!fill, resolution, complete
+    data,
+    !!x,
+    !!y,
+    !!fill,
+    resolution,
+    complete
   )
   size_x <- bin_size(cr, !!x)
   size_y <- bin_size(cr, !!y)
@@ -110,8 +145,8 @@ db_compute_raster2 <- function(data, x, y, fill = n(), resolution = 100, complet
 #' intersections of the two variables. A Raster plot may be a better option,
 #' because it concentrates the intersections into squares that are easier to parse visually.
 #'
-#' Uses very generic dplyr code to aggregate data and ggplot2 to create
-#' a raster plot.  Because of this approach,
+#' Uses dplyr operations to aggregate data and ggplot2 to create
+#' a raster plot. Because of this approach,
 #' the calculations automatically run inside the database if `data` has
 #' a database or sparklyr connection. The `class()` of such tables
 #' in R are: tbl_sql, tbl_dbi, tbl_spark
@@ -131,28 +166,48 @@ db_compute_raster2 <- function(data, x, y, fill = n(), resolution = 100, complet
 #' @param x A continuous variable
 #' @param y A continuous variable
 #' @param fill The aggregation formula. Defaults to count (n)
-#' @param resolution The number of bins created by variable. The highest the number, the more records
-#' can be potentially imported from the sourd
+#' @param resolution The number of bins created per variable. The higher the number, the more records
+#' will be imported from the source
 #' @param complete Uses tidyr::complete to include empty bins. Inserts value of 0.
 #'
-#' @examples
+#' @returns A ggplot object displaying a raster/heatmap plot of the aggregated data
+#'   across the two continuous variables.
 #'
-#' library(ggplot2)
+#' @examples
+#' \dontrun{
+#' library(DBI)
 #' library(dplyr)
+#' library(ggplot2)
+#' con <- dbConnect(duckdb::duckdb(), ":memory:")
+#' db_faithful <- copy_to(con, faithful, "faithful")
 #'
 #' # Returns a 100x100 raster plot of record count of intersections of eruptions and waiting
-#' faithful %>%
+#' db_faithful |>
 #'   dbplot_raster(eruptions, waiting)
 #'
 #' # Returns a 50x50 raster plot of eruption averages of intersections of eruptions and waiting
-#' faithful %>%
+#' db_faithful |>
 #'   dbplot_raster(eruptions, waiting, fill = mean(eruptions), resolution = 50)
+#'
+#' dbDisconnect(con)
+#' }
 #' @seealso
 #' \code{\link{dbplot_bar}}, \code{\link{dbplot_line}} ,
 #' \code{\link{dbplot_histogram}}
 #'
 #' @export
-dbplot_raster <- function(data, x, y, fill = n(), resolution = 100, complete = FALSE) {
+dbplot_raster <- function(
+  data,
+  x,
+  y,
+  fill = n(),
+  resolution = 100,
+  complete = FALSE
+) {
+  if (resolution <= 0) {
+    stop("`resolution` must be greater than 0", call. = FALSE)
+  }
+
   x <- enexpr(x)
   y <- enexpr(y)
   fillname <- enexpr(fill)
